@@ -71,7 +71,7 @@ class SendSmtp():
             raise DeliverablesException.Else("param fle is not exist: %s" %PARAM_PATH)
         self._PARAM = SmtpParam(**yaml.safe_load(open(PARAM_PATH,"r")))
 
-    def send_mail(self, state: str="start", msg: str="", job_result_dir=None, ui_mode="run_ui")-> bool:
+    def send_mail(self, attachment_fles: list, state: str="start", ui_mode: str ="run_ui")-> bool:
         """[summary]
 
         Args:
@@ -89,16 +89,14 @@ class SendSmtp():
         to_addrs         = self._PARAM.MAILLIST["to_addr"]
 
         logger.debug("get mail subject and text")
-        str_subject, str_msg = self._get_mailtext(state, msg, ui_mode)
+        str_subject, str_msg = self._get_mailtext(state, ui_mode)
         logger.info("mail subject: %s, mail text: %s" %(str_subject, str_msg))
 
-        logger.debug("get attachments")
-        if job_result_dir is not None:
-            attachment_files = self._get_attachments(state, job_result_dir)
-            logger.debug("got attachments")
+        attachment_files = []
+        for fle in attachment_fles:
+            attachment_files = self._get_attached_obj(fle, attachment_files)
 
         logger.debug("start attaching text")
-
         for idx in range(len(from_addrs)):
             if not self._PARAM.DEBUG_FLG:
                 logger.debug("try to get smtp object")
@@ -107,16 +105,7 @@ class SendSmtp():
                 logger.debug("start sending")
                 mailpart = self._create_mailpart(subject=str_subject, from_addrs=from_addrs[idx], to_addrs=to_addrs[idx], msg=str_msg, attachment_files=attachment_files)
 
-                try:
-                    self.smtpobj.sendmail(from_addrs[idx], to_addrs[idx].split(","), mailpart.as_string())
-                    ret = True
-                except OSError as ERR:
-                    print(str(ERR))
-                    raise DeliverablesException.Code3()
-                finally:
-                    self.smtpobj.quit()
-                    logger.debug("exit send_mail process")
-                    ret = False
+                _ = self._send_mail_obj(from_addrs=from_addrs[idx], to_addrs=to_addrs[idx], mailpart=mailpart)
         return ret
 
     def _create_mailpart(self, subject: str, from_addrs: str, to_addrs: str, msg: str, attachment_files: list)-> MIMEMultipart:
@@ -133,51 +122,7 @@ class SendSmtp():
             mailpart.attach(fle)
         return mailpart
 
-    def _get_attachments(self, state, job_result_dir):
-        """This method searchs and gets the attachment files, which is error log or the graphes of the production results.
-
-        Args:
-            state (str): The status of the ai picking system. Has to be chosen from ["start", "error", "done"].
-            job_result_dir (pathlib.PosixPath): The pathlib object of the absolute path of the production results.
-
-        Raises:
-            DeliverablesException.Code2: Araises if the graphs or error log, tray images is not exist in the directory which should be.
-
-        Returns:
-            attachments [list]: The list of the attachment files. The contents of the list is MIME transformed object.
-        """
-        attachments = []
-        if state == "error":
-            trays = sorted(glob(str(job_result_dir / "**" / "log")))
-            logger_txts = sorted(glob(str(Path(trays[-1]) / 'logger_kitting_process*')))
-            logger.info("mail parameter: logger_txts==%s" %logger_txts)
-            for fle in logger_txts:
-                self._get_attched_obj(fle, attachments)
-        elif state == "done":
-            logger.debug("is file exist?? -->> %s" %os.path.isfile(str(CURRENTDIR.parent / self._PARAM.RUN_UI_PATH / "result_jobtime.png")))
-            
-            if not os.path.isfile(str(CURRENTDIR.parent / self._PARAM.RUN_UI_PATH / "result_jobtime.png")):
-                raise DeliverablesException.Code2()
-            else:
-                img_jobtime = str(CURRENTDIR.parent / self._PARAM.RUN_UI_PATH / "result_jobtime.png")
-                self._get_attched_obj(img_jobtime, attachments)
-            logger.debug("is file exist?? -->> %s" %os.path.isfile(str(CURRENTDIR.parent / self._PARAM.RUN_UI_PATH / "result_pickrate.png")))
-            
-            if not os.path.isfile(str(CURRENTDIR.parent / self._PARAM.RUN_UI_PATH / "result_pickrate.png")):
-                raise DeliverablesException.Code2()
-            else:
-                img_pickrate = str(CURRENTDIR.parent / self._PARAM.RUN_UI_PATH / "result_pickrate.png")
-                self._get_attched_obj(img_pickrate, attachments)
-
-            fles = glob(str(job_result_dir / "**/tray_img/*.jpg"), recursive=True)
-            if fles == []:
-                raise DeliverablesException.Code2()
-            else:
-                for fle in fles:
-                    self._get_attched_obj(fle, attachments)
-        return attachments
-
-    def _get_attched_obj(self, fle: str, attachment_fles: list)-> list:
+    def _get_attached_obj(self, fle: str, attachment_fles: list)-> list:
         logger.debug("fle: %s" %fle)
         extension = fle.rsplit(".",1)[-1]
         if extension in ["jpg", "png", "bmp", "tiff"]:
@@ -235,6 +180,19 @@ class SendSmtp():
                 self.smtpobj.login(self._PARAM.MAILLIST["from_addr"][idx], self._PARAM.MAILLIST["password"][idx])
         except:
             raise DeliverablesException.Code3()
+
+    def _send_mail_obj(self, from_addrs: str, to_addrs: str, mailpart: MIMEMultipart)-> bool:
+        try:
+            self.smtpobj.sendmail(from_addrs, to_addrs.split(","), mailpart.as_string())
+            ret = True
+        except OSError as ERR:
+            print(str(ERR))
+            raise DeliverablesException.Code3()
+        finally:
+            self.smtpobj.quit()
+            logger.debug("exit send_mail process")
+            ret = False
+        return ret
 
 
 if __name__=="__main__":
