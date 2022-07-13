@@ -1,0 +1,5 @@
+ROOT_DIR                : "s3://robot-arm-dataset1/SHIBAHARA_results/test_uploader/"
+LATEST_LOG_PATH         : "s3://robot-arm-dataset1/SHIBAHARA_results/test_uploader/"
+LATEST_STATUS_LINE      : 0
+TIME_FORMAT             : "%Y-%m-%d_%H:%M:%S"
+FILE_TIME_STR           : "%Y-%m-%d %H:%M:%S" # "%Y-%m-%d_%H:%M:%S"

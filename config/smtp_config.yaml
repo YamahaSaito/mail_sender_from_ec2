@@ -2,16 +2,13 @@
 "SMTP_PORT": ["587"] #["smtp"]
 "MAILLIST": 
    "from_addr": ["yamaha.aipicking@outlook.jp"]
-   # "from_addr": ["hirao@shibahara.co.jp"]
    "to_addr": ["saitoutakash@yamaha-motor.co.jp"]
-   # "to_addr": ["hirao@shibahara.co.jp,komaikek@yamaha-motor.co.jp,yamamotoats@yamaha-motor.co.jp,saitoutakash@yamaha-motor.co.jp"]
-   # "to_addr": ["hirao@shibahara.co.jp"]
    "password": ["AiPicking"]
 "RUN_UI_PATH": "run/visualize_data"
-"NEED_AUTH": [False] #[True]
+"NEED_AUTH": [True] #[True]
 "DEBUG_FLG": True
 "TEXT_STRS":
-   "run_ui":
+   "run_results":
       "error":
          "subject": '【芝原様機 生産】エラー発生 ' 
          "msg": '芝原様機 エラー発生'
@@ -21,7 +18,7 @@
       "done":
          "subject": '【芝原様機 生産】生産完了 '
          "msg": '芝原様機 生産完了'
-   "train_ui":
+   "train_results":
       "error":
          "subject": '【芝原様機 学習UI】エラー発生 ' 
          "msg": '芝原様機 エラー発生'
@@ -31,7 +28,7 @@
       "done":
          "subject": '【芝原様機 学習UI】データ収集完了 '
          "msg": '芝原様機 データ収集完了'
-   "pickuptest_ui":
+   "pickuptest_results":
       "error":
          "subject": '【芝原様機 ピックアップテスト】エラー発生 ' 
          "msg": '芝原様機 エラー発生'
@@ -41,3 +38,12 @@
       "done":
          "subject": '【芝原様機 ピックアップテスト】ピックアップテスト完了 '
          "msg": '芝原様機 ピックアップテスト完了'
+"MAIL_STATUS_LIST":
+   - "start"
+   - "error"
+   - "done"
+"UI_MODE_LIST":
+   - "run_results"
+   - "train_results"
+   - "pickuptest_results"
+"SEND_MAIL_KEYWORD": send_mail #'[MailStatus]'
